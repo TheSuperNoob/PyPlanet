@@ -186,6 +186,8 @@ class Command:
 		"""
 		The usage text line for the command.
 		"""
+		if not self.parser.params:
+			return ''
 		text = 'Usage: /{}{}{}'.format(
 			'/' if self.admin else '',
 			self.namespace if self.namespace else '',
@@ -209,5 +211,5 @@ class Command:
 		return '/{}{}{}'.format(
 			'/' if self.admin else '',
 			'|'.join(self.namespace) if self.namespace and isinstance(self.namespace, (list, tuple)) else self.command,
-			' ' + self.command if self.namespace else '',
+			' ' + self.command if self.namespace else '' + ' {}'.format(str(self.aliases) if self.aliases else ''),
 		)

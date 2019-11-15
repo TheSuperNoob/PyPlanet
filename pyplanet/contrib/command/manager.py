@@ -48,10 +48,6 @@ class CommandManager(CoreContrib):
 		self._instance.signals.listen('maniaplanet:player_chat', self._on_chat)
 
 		# Register /help and //help
-		await self.register(
-			Command('help', target=self._help).add_param('command', nargs='*', required=False),
-			Command('help', target=self._help, admin=True).add_param('command', nargs='*', required=False),
-		)
 
 	async def register(self, *commands):
 		"""
@@ -116,49 +112,3 @@ class CommandManager(CoreContrib):
 			'Powered by $l[http://pypla.net]$FD4Py$369Planet',
 			player.login
 		),
-
-	async def _help(self, player, data, raw, command):  # pragma: no cover
-		help_command = command
-		filter_admin = bool(help_command.admin)
-
-		# Show usage of a single command, given as second or more params.
-		if data.command:
-			cmd_args = data.command
-
-			# HACK: Add / before an admin command to match the right command.
-			if filter_admin and cmd_args:
-				cmd_args[0] = '/{}'.format(cmd_args[0])
-
-			# Find the right command.
-			cmd_instance = None
-			for cmd in self._commands:
-				if cmd.match(cmd_args):
-					cmd_instance = cmd
-					break
-			# If found, show the usage of the command.
-			if cmd_instance:
-				await self._instance.chat(
-					'$z$s{}'.format(cmd_instance.usage_text),
-					player
-				)
-				return
-
-		# All commands.
-		commands = [c for c in self._commands if c.admin is filter_admin]
-		calls = list()
-		for cmds in batch(commands, 7):
-			help_texts = [str(c) for c in cmds]
-			calls.append(
-				self._instance.chat(
-					'$z$s{}'.format(' | '.join(help_texts)),
-					player.login
-				)
-			)
-
-		await self._instance.gbx.multicall(
-			self._instance.chat(
-				'$z$sCommand list. Help per command: /{}help [command]'.format('/' if filter_admin else ''),
-				player.login
-			),
-			*calls
-		)
