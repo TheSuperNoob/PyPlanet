@@ -99,7 +99,7 @@ class PrivateMessage(AppConfig):
 		raw_message = ' '.join(kwargs['raw'])
 		message = '$ff0[$f00pm$ff0] [{}$z$i$ff0 -> Admins] {}'.format(player.nickname, raw_message)
 		for online_player in online_players:
-			if player.get_level_string() == 'Admin' or player.get_level_string() == 'MasterAdmin':
+			if online_player.get_level_string() == 'Admin' or online_player.get_level_string() == 'MasterAdmin':
 				await self.instance.chat(message, online_player)
 
 		await self.append_pm_log(player, raw_message)
