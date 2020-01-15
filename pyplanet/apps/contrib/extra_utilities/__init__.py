@@ -1,6 +1,7 @@
+from random import choice
+
 from pyplanet.apps.config import AppConfig
 from pyplanet.contrib.command import Command
-from pyplanet.contrib.player.exceptions import PlayerNotFound
 
 
 
@@ -29,6 +30,11 @@ class ExtraUtilitiesApp(AppConfig):
 			Command(command='afk', target=self.afk),
 			Command(command='hello', aliases=['hi'], target=self.hello),
 			Command(
+				command='bb',
+				aliases=['bye', 'rq', 'ragequit'],
+				target=self.ragequit
+			),
+			Command(
 				command='message',
 				aliases=['servermessage'],
 				target=self.message,
@@ -46,7 +52,7 @@ class ExtraUtilitiesApp(AppConfig):
 
 
 	async def afk(self, player, data, **kwargs):
-		message = f'$z$s$ff0[{player.nickname}$z$s$ff0] $iAway from keyboard!'
+		message = f'$z$s$ff0[{player.nickname}$z$s$ff0] $iAway From Keyboard!'
 
 		await self.instance.gbx.multicall(
 			self.instance.gbx('ForceSpectator', player.login, 3),
@@ -55,9 +61,22 @@ class ExtraUtilitiesApp(AppConfig):
 
 	async def hello(self, player, data, **kwargs):
 
-		message = f'$z$s$ff0[{player.nickname} $z$s$ff0] $iHello all!'
+		message = f'$z$s$ff0[{player.nickname} $z$s$ff0] $iHello All!'
 
 		await self.instance.chat(message, raw=True)
+
+	async def ragequit(self, player, data, **kwargs):
+		phrases = ['I\'m out', 'Bye bye guys', 'Ragequit']
+		message = f'$z$s$ff0[{player.nickname} $z$s$ff0] $i{choice(phrases)}'
+
+		await self.instance.gbx.multicall(
+			self.instance.chat(message, raw=True),
+			self.instance.gbx(
+				'Kick',
+				player.login,
+				'You have booted yourself from the server'
+			)
+		)
 
 	async def message(self, player, data, **kwargs):
 		message = '$z$s$ff0[{} $z$s$ff0] {}'.format(self.instance.game.server_name, ' '.join(kwargs['raw']))
