@@ -95,8 +95,6 @@ class TimerApp(AppConfig):
 		self.end_time += timedelta(seconds=seconds)
 		self.time_left += timedelta(seconds=seconds)
 
-		print(self.time_left.seconds)
-
 		await self.instance.mode_manager.update_settings(
 			{'S_TimeLimit': self.time_left.seconds}
 		)
