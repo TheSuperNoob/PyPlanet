@@ -8,6 +8,10 @@ from pyplanet.contrib.command import Command
 
 
 class TimerApp(AppConfig):
+	original_timer = None
+	timer_set = False
+	timer_active = False
+
 	end_time = None
 	time_left = None
 	time_at_start = None
@@ -17,6 +21,15 @@ class TimerApp(AppConfig):
 
 	async def on_start(self):
 		self.context.signals.listen(mp_signals.map.map_start, self.map_start)
+		self.context.signals.listen(mp_signals.map.map_end, self.map_end)
+
+		self.original_timer = None
+		self.timer_set = False
+		self.timer_active = False
+
+		self.end_time = None
+		self.time_left = None
+		self.time_at_start = None
 
 		await self.instance.permission_manager.register(
 			'timer',
@@ -53,11 +66,18 @@ class TimerApp(AppConfig):
 		)
 
 	async def map_start(self, map, restarted, **kwargs):
+		if restarted:
+			await self.map_end(map)
 		self.time_at_start = datetime.now()
 
-
+	async def map_end(self, map, **kwargs):
+		if self.timer_set:
+			await self.instance.mode_manager.update_settings(
+				{'S_TimeLimit': self.original_timer if self.original_timer is not None else 300}
+			)
 
 	async def set_timer(self, player, data, *args, **kwargs):
+
 		try:
 			seconds = abs(int(data.minutes)) * 60
 
@@ -67,6 +87,15 @@ class TimerApp(AppConfig):
 			return
 
 		now = datetime.now()
+		if not self.timer_set:
+
+			self.timer_set = True
+
+			self.original_timer = await (self.instance.mode_manager.get_settings())
+			self.original_timer = self.original_timer['S_TimeLimit']
+
+		if not self.timer_active:
+			self.timer_active = True
 
 		# You have to subtract 3 here to account for map start being 3 seconds
 		# before you can acutally start playing
@@ -95,6 +124,12 @@ class TimerApp(AppConfig):
 
 			return
 
+		if not self.timer_active:
+			message = f'$z$sThere is currently no timer running!'
+
+			await self.instance.chat(message)
+			return
+
 		self.end_time += timedelta(seconds=seconds)
 		self.time_left += timedelta(seconds=seconds)
 
@@ -113,6 +148,12 @@ class TimerApp(AppConfig):
 
 		except ValueError:
 			# TODO: Send error message
+			return
+
+		if not self.timer_active:
+			message = f'$z$sThere is currently no timer running!'
+
+			await self.instance.chat(message)
 			return
 
 		self.end_time -= timedelta(seconds=seconds)
@@ -139,3 +180,4 @@ class TimerApp(AppConfig):
 
 		message = f'$z$s{player.nickname}$z$s has stopped the timer!'
 		await self.instance.chat(message)
+		self.timer_active = False
