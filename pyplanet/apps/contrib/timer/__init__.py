@@ -31,19 +31,19 @@ class TimerApp(AppConfig):
 				namespace='timer',
 				target=self.set_timer,
 				admin=True
-			).add_param(name='seconds', type=int, required=True),
+			).add_param(name='minutes', type=int, required=True),
 			Command(
 				command='add',
 				namespace='timer',
 				target=self.increment_timer,
 				admin=True
-			).add_param(name='seconds', type=int, required=True),
+			).add_param(name='minutes', type=int, required=True),
 			Command(
 				command='sub',
 				namespace='timer',
 				target=self.decrement_timer,
 				admin=True
-			).add_param(name='seconds', type=int, required=True),
+			).add_param(name='minutes', type=int, required=True),
 			Command(
 				command='stop',
 				namespace='timer',
@@ -59,7 +59,7 @@ class TimerApp(AppConfig):
 
 	async def set_timer(self, player, data, *args, **kwargs):
 		try:
-			seconds = abs(int(data.seconds))
+			seconds = abs(int(data.minutes)) * 60
 
 
 		except ValueError:
@@ -68,7 +68,10 @@ class TimerApp(AppConfig):
 
 		now = datetime.now()
 
-		time_since_start = int((now - self.time_at_start).total_seconds())
+		# You have to subtract 3 here to account for map start being 3 seconds
+		# before you can acutally start playing
+
+		time_since_start = int((now - self.time_at_start).total_seconds()) - 3
 
 		await self.instance.mode_manager.update_settings(
 			{'S_TimeLimit': time_since_start + seconds}
@@ -79,13 +82,13 @@ class TimerApp(AppConfig):
 		self.end_time = now + timedelta(seconds=seconds)
 		self.time_left = self.end_time - now
 
-		message = f'$z$s{player.nickname}$z$s has started a new timer for $z$s$fff{seconds}$z$s seconds!'
+		message = f'$z$s{player.nickname}$z$s has started a new timer for $z$s$fff{data.minutes}$z$s minutes!'
 
 		await self.instance.chat(message)
 
 	async def increment_timer(self, player, data, *args, **kwargs):
 		try:
-			seconds = int(data.seconds)
+			seconds = abs(int(data.minutes)) * 60
 
 		except ValueError:
 			# TODO: Send error message
@@ -99,14 +102,14 @@ class TimerApp(AppConfig):
 			{'S_TimeLimit': self.time_left.seconds}
 		)
 
-		message = f'$z$s{player.nickname}$z$s has increased the timer with $z$s$fff{data.seconds}$z$s seconds!'
+		message = f'$z$s{player.nickname}$z$s has increased the timer with $z$s$fff{data.minutes}$z$s minutes!'
 
 		await self.instance.chat(message)
 
 
 	async def decrement_timer(self, player, data, *args, **kwargs):
 		try:
-			seconds = int(data.seconds)
+			seconds = abs(int(data.minutes)) * 60
 
 		except ValueError:
 			# TODO: Send error message
@@ -125,7 +128,7 @@ class TimerApp(AppConfig):
 		await self.instance.mode_manager.update_settings(
 			{'S_TimeLimit': self.time_left.seconds}
 		)
-		message = f'$z$s{player.nickname}$z$s has decreased the timer with $z$s$fff{data.seconds}$z$s seconds!'
+		message = f'$z$s{player.nickname}$z$s has decreased the timer with $z$s$fff{data.minutes}$z$s minutes!'
 
 		await self.instance.chat(message)
 
