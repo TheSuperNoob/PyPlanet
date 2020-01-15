@@ -79,7 +79,7 @@ class TimerApp(AppConfig):
 		self.end_time = now + timedelta(seconds=seconds)
 		self.time_left = self.end_time - now
 
-		message = f'$z$s{player.nickname}$z$s has started a new timer!'
+		message = f'$z$s{player.nickname}$z$s has started a new timer for $z$s$fff{seconds}$z$s seconds!'
 
 		await self.instance.chat(message)
 
@@ -99,7 +99,7 @@ class TimerApp(AppConfig):
 			{'S_TimeLimit': self.time_left.seconds}
 		)
 
-		message = f'$z$s{player.nickname}$z$s has increased the timer with {data.seconds} seconds!'
+		message = f'$z$s{player.nickname}$z$s has increased the timer with $z$s$fff{data.seconds}$z$s seconds!'
 
 		await self.instance.chat(message)
 
@@ -125,7 +125,7 @@ class TimerApp(AppConfig):
 		await self.instance.mode_manager.update_settings(
 			{'S_TimeLimit': self.time_left.seconds}
 		)
-		message = f'$z$s{player.nickname}$z$s has decreased the timer with {data.seconds} seconds!'
+		message = f'$z$s{player.nickname}$z$s has decreased the timer with $z$s$fff{data.seconds}$z$s seconds!'
 
 		await self.instance.chat(message)
 
