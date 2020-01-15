@@ -47,7 +47,7 @@ class TimerApp(AppConfig):
 		add_description = 'Add X minutes to current timer'
 		sub_description = 'Subtract X minutes from current timer'
 		stop_description = 'Stop current timer (remove timer from current map)'
-		update_description = 'Save current timelimit to X minutes'
+		update_description = 'Makes X the default timelimit for the server'
 
 		await self.instance.command_manager.register(
 			Command(
