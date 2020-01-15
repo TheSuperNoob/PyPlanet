@@ -11,6 +11,8 @@ class TimerApp(AppConfig):
 	original_timer = None
 	timer_set = False
 	timer_active = False
+	current_script = None
+	current_timer = None
 
 	end_time = None
 	time_left = None
@@ -26,10 +28,13 @@ class TimerApp(AppConfig):
 		self.original_timer = None
 		self.timer_set = False
 		self.timer_active = False
+		self.current_timer = None
 
 		self.end_time = None
 		self.time_left = None
 		self.time_at_start = None
+		self.current_script = await self.instance.mode_manager.get_current_script()
+
 
 		await self.instance.permission_manager.register(
 			'timer',
@@ -62,6 +67,12 @@ class TimerApp(AppConfig):
 				namespace='timer',
 				target=self.stop_timer,
 				admin=True
+			),
+			Command(
+				command='update',
+				namespace='timer',
+				target=self.update_timer,
+				admin=True
 			)
 		)
 
@@ -78,6 +89,12 @@ class TimerApp(AppConfig):
 
 	async def set_timer(self, player, data, *args, **kwargs):
 
+		if self.current_script != 'TimeAttack':
+			message = f'$z$sWe need to be in timeattack!'
+
+			await self.instance.chat(message)
+			return
+
 		try:
 			seconds = abs(int(data.minutes)) * 60
 
@@ -85,6 +102,7 @@ class TimerApp(AppConfig):
 		except ValueError:
 			# TODO: Send error message
 			return
+
 
 		now = datetime.now()
 		if not self.timer_set:
@@ -99,6 +117,8 @@ class TimerApp(AppConfig):
 
 		# You have to subtract 3 here to account for map start being 3 seconds
 		# before you can acutally start playing
+
+		self.current_timer = seconds
 
 		time_since_start = int((now - self.time_at_start).total_seconds()) - 3
 
@@ -181,3 +201,11 @@ class TimerApp(AppConfig):
 		message = f'$z$s{player.nickname}$z$s has stopped the timer!'
 		await self.instance.chat(message)
 		self.timer_active = False
+
+	async def update_timer(self, player, data, *args, **kwargs):
+
+		self.original_timer = self.current_timer
+
+		message = f'$z$s{player.nickname}$z$s updated the default timer to $z$s$fff{int(self.current_timer / 60)}$z$s minutes!'
+
+		await self.instance.chat(message)
