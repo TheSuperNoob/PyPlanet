@@ -43,37 +43,48 @@ class TimerApp(AppConfig):
 			min_level=2
 		)
 
+		set_description = 'Set a timer for current map in X minutes'
+		add_description = 'Add X minutes to current timer'
+		sub_description = 'Subtract X minutes from current timer'
+		stop_description = 'Stop current timer (remove timer from current map)'
+		update_description = 'Save current timelimit to X minutes'
+
 		await self.instance.command_manager.register(
 			Command(
 				command='set',
 				namespace='timer',
 				target=self.set_timer,
-				admin=True
+				admin=True,
+				description=set_description
 			).add_param(name='minutes', type=int, required=True),
 			Command(
 				command='add',
 				namespace='timer',
 				target=self.increment_timer,
-				admin=True
+				admin=True,
+				description=add_description
 			).add_param(name='minutes', type=int, required=True),
 			Command(
 				command='sub',
 				namespace='timer',
 				target=self.decrement_timer,
-				admin=True
+				admin=True,
+				description=sub_description
 			).add_param(name='minutes', type=int, required=True),
 			Command(
 				command='stop',
 				namespace='timer',
 				target=self.stop_timer,
-				admin=True
+				admin=True,
+				description=stop_description
 			),
 			Command(
 				command='update',
 				namespace='timer',
 				target=self.update_timer,
-				admin=True
-			)
+				admin=True,
+				description=update_description
+			).add_param(name='minutes', type=int, required=True)
 		)
 
 	async def map_start(self, map, restarted, **kwargs):
@@ -203,9 +214,12 @@ class TimerApp(AppConfig):
 		self.timer_active = False
 
 	async def update_timer(self, player, data, *args, **kwargs):
+		try:
 
-		self.original_timer = self.current_timer
+			self.original_timer = int(data.minutes) * 60
+		except ValueError:
+			return
 
-		message = f'$z$s{player.nickname}$z$s updated the default timer to $z$s$fff{int(self.current_timer / 60)}$z$s minutes!'
+		message = f'$z$s{player.nickname}$z$s updated the default timer to $z$s$fff{data.minutes}$z$s minutes!'
 
 		await self.instance.chat(message)
