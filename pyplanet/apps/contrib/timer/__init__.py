@@ -5,8 +5,6 @@ from pyplanet.apps.core.maniaplanet import callbacks as mp_signals
 from pyplanet.contrib.command import Command
 
 
-
-
 class TimerApp(AppConfig):
 	original_timer = None
 	timer_set = False
@@ -35,7 +33,6 @@ class TimerApp(AppConfig):
 		self.time_at_start = None
 		self.current_script = await self.instance.mode_manager.get_current_script()
 
-
 		await self.instance.permission_manager.register(
 			'timer',
 			'Custom timer commands for admins',
@@ -47,7 +44,9 @@ class TimerApp(AppConfig):
 		add_description = 'Add X minutes to current timer'
 		sub_description = 'Subtract X minutes from current timer'
 		stop_description = 'Stop current timer (remove timer from current map)'
-		update_description = 'Makes X the default timelimit for the server'
+		update_description = 'Makes X minutes the default timelimit for the server'
+
+		help_text = 'Number of minutes is required'
 
 		await self.instance.command_manager.register(
 			Command(
@@ -56,21 +55,36 @@ class TimerApp(AppConfig):
 				target=self.set_timer,
 				admin=True,
 				description=set_description
-			).add_param(name='minutes', type=int, required=True),
+			).add_param(
+				name='minutes',
+				type=int,
+				required=True,
+				help=help_text
+			),
 			Command(
 				command='add',
 				namespace='timer',
 				target=self.increment_timer,
 				admin=True,
 				description=add_description
-			).add_param(name='minutes', type=int, required=True),
+			).add_param(
+				name='minutes',
+				type=int,
+				required=True,
+				help=help_text
+			),
 			Command(
 				command='sub',
 				namespace='timer',
 				target=self.decrement_timer,
 				admin=True,
 				description=sub_description
-			).add_param(name='minutes', type=int, required=True),
+			).add_param(
+				name='minutes',
+				type=int,
+				required=True,
+				help=help_text
+			),
 			Command(
 				command='stop',
 				namespace='timer',
@@ -84,7 +98,12 @@ class TimerApp(AppConfig):
 				target=self.update_timer,
 				admin=True,
 				description=update_description
-			).add_param(name='minutes', type=int, required=True)
+			).add_param(
+				name='minutes',
+				type=int,
+				required=True,
+				help=help_text
+			)
 		)
 
 	async def map_start(self, map, restarted, **kwargs):
@@ -109,11 +128,8 @@ class TimerApp(AppConfig):
 		try:
 			seconds = abs(int(data.minutes)) * 60
 
-
 		except ValueError:
-			# TODO: Send error message
 			return
-
 
 		now = datetime.now()
 		if not self.timer_set:
@@ -126,12 +142,16 @@ class TimerApp(AppConfig):
 		if not self.timer_active:
 			self.timer_active = True
 
+		self.current_timer = seconds
+
 		# You have to subtract 3 here to account for map start being 3 seconds
 		# before you can acutally start playing
 
-		self.current_timer = seconds
-
 		time_since_start = int((now - self.time_at_start).total_seconds()) - 3
+
+		# You need to calculate time since start of map because in the
+		# TimeAttack script the time that is left of the map is based on
+		# When the map started and the timelimit setting
 
 		await self.instance.mode_manager.update_settings(
 			{'S_TimeLimit': time_since_start + seconds}
@@ -151,8 +171,6 @@ class TimerApp(AppConfig):
 			seconds = abs(int(data.minutes)) * 60
 
 		except ValueError:
-			# TODO: Send error message
-
 			return
 
 		if not self.timer_active:
@@ -172,13 +190,11 @@ class TimerApp(AppConfig):
 
 		await self.instance.chat(message)
 
-
 	async def decrement_timer(self, player, data, *args, **kwargs):
 		try:
 			seconds = abs(int(data.minutes)) * 60
 
 		except ValueError:
-			# TODO: Send error message
 			return
 
 		if not self.timer_active:
@@ -215,8 +231,8 @@ class TimerApp(AppConfig):
 
 	async def update_timer(self, player, data, *args, **kwargs):
 		try:
-
 			self.original_timer = int(data.minutes) * 60
+
 		except ValueError:
 			return
 
