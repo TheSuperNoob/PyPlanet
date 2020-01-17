@@ -147,14 +147,14 @@ class TimerApp(AppConfig):
 		# You have to subtract 3 here to account for map start being 3 seconds
 		# before you can acutally start playing
 
-		time_since_start = int((now - self.time_at_start).total_seconds()) - 3
+		start = self.time_since_start()
 
 		# You need to calculate time since start of map because in the
 		# TimeAttack script the time that is left of the map is based on
 		# When the map started and the timelimit setting
 
 		await self.instance.mode_manager.update_settings(
-			{'S_TimeLimit': time_since_start + seconds}
+			{'S_TimeLimit': start + seconds}
 		)
 
 		now = datetime.now()
@@ -179,11 +179,13 @@ class TimerApp(AppConfig):
 			await self.instance.chat(message)
 			return
 
+		start = self.time_since_start()
+
 		self.end_time += timedelta(seconds=seconds)
 		self.time_left += timedelta(seconds=seconds)
 
 		await self.instance.mode_manager.update_settings(
-			{'S_TimeLimit': self.time_left.seconds}
+			{'S_TimeLimit': start + self.time_left.seconds}
 		)
 
 		message = f'$z$s{player.nickname}$z$s has increased the timer with $z$s$fff{data.minutes}$z$s minutes!'
@@ -203,6 +205,8 @@ class TimerApp(AppConfig):
 			await self.instance.chat(message)
 			return
 
+		start = self.time_since_start()
+
 		self.end_time -= timedelta(seconds=seconds)
 		time_left = self.time_left - timedelta(seconds=seconds)
 
@@ -214,7 +218,7 @@ class TimerApp(AppConfig):
 		self.time_left = time_left
 
 		await self.instance.mode_manager.update_settings(
-			{'S_TimeLimit': self.time_left.seconds}
+			{'S_TimeLimit': start + self.time_left.seconds}
 		)
 		message = f'$z$s{player.nickname}$z$s has decreased the timer with $z$s$fff{data.minutes}$z$s minutes!'
 
@@ -239,3 +243,7 @@ class TimerApp(AppConfig):
 		message = f'$z$s{player.nickname}$z$s updated the default timer to $z$s$fff{data.minutes}$z$s minutes!'
 
 		await self.instance.chat(message)
+
+	def time_since_start(self):
+		now = datetime.now()
+		return int((now - self.time_at_start).total_seconds()) - 3
